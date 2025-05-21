@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>翻滾吧粽子</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 遊戲畫面 -->
+        <div id="game-screen">
+            <div class="menu-icon" id="menu-toggle">☰</div>
+            <div id="score">SCORE: 0</div>
+            <div id="game">
+                <div id="zongzi" class="zongzi"></div>
+                <div id="ground" class="ground"></div>
+            </div>
+            <!-- 新增跳躍按鈕 -->
+            <button id="jump-btn" class="jump-button">JUMP</button>
+        </div>
+        
+        <!-- 粽子選擇畫面 (彈出視窗) -->
+        <div id="character-select" class="character-select popup hidden">
+            <div class="popup-content">
+                <h2>選擇您的粽子</h2>
+                <div class="character-options">
+                    <div class="character-option" data-zongzi="zongzi" data-obstacle-set="common">
+                        <img src="assets/images/zongzi.png" alt="南部粽" class="zongzi-img">
+                        <h3>南部粽</h3>
+                        <p>我是正港的</p>
+                    </div>
+                    <div class="character-option" data-zongzi="zongzi 02" data-obstacle-set="common">
+                        <img src="assets/images/zongzi 02.png" alt="北部粽" class="zongzi-img">
+                        <h3>北部粽</h3>
+                        <p>我才是正港的</p>
+                    </div>
+                    <div class="character-option" data-zongzi="zongzi 04" data-obstacle-set="central_special">
+                        <img src="assets/images/zongzi 04.png" alt="中部粽" class="zongzi-img">
+                        <h3>中部粽</h3>
+                        <p>嚐嚐水泥的滋味</p>
+                    </div>
+                    <div class="character-option" data-zongzi="zongzi 03" data-obstacle-set="common">
+                        <img src="assets/images/zongzi 03.png" alt="裸粽" class="zongzi-img">
+                        <h3>裸粽</h3>
+                        <p>裸奔的美好味道</p>
+                    </div>
+                </div>
+                <button id="close-select" class="close-button">✕</button>
+            </div>
+        </div>
+        
+        <!-- 遊戲結束畫面 (彈出視窗) -->
+        <div id="game-over" class="popup hidden">
+            <div class="popup-content game-over-content">
+                <p class="score-label">最終得分</p>
+                <p class="final-score-container"><span id="final-score">0</span></p>
+                <p id="witty-end-message" class="witty-message"></p>
+                <div class="button-group">
+                    <button id="restart-game" class="action-button">重新開始</button>
+                    <button id="change-zongzi" class="action-button">更換粽子</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html> 
