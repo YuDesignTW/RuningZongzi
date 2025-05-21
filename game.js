@@ -13,6 +13,10 @@ let selectedZongzi = "zongzi"; // 預設選擇南部粽
 let currentObstacleSet = "common"; // 預設障礙物集合
 let wittyEndMessageDisplay; // For the witty end message
 let speedMultiplier = 1; // Speed multiplier for special characters
+let bgmAudio; // Background music audio element
+let currentBgm = ""; // Track current playing bgm
+let bgmInitialized = false; // 標記音樂是否已初始化
+let userInteracted = false; // 標記用戶是否已互動
 
 // Witty end messages categorized by score
 const wittyMessages = {
@@ -45,6 +49,12 @@ const IMAGE_PATHS = {
     common_obstacle2: 'assets/images/obstacle2.png',     // 障礙物2，尺寸：16x20px
     central_obstacle1: 'assets/images/central_obstacle1.png', // New Central Zongzi Obstacle 1
     central_obstacle2: 'assets/images/central_obstacle2.png'  // New Central Zongzi Obstacle 2
+};
+
+// 音頻資源路徑
+const AUDIO_PATHS = {
+    bgm_main: 'assets/sounds/bgm_main_theme.mp3',    // 主題背景音樂
+    bgm_central: 'assets/sounds/bgm_central.mp3'     // 中部粽專屬背景音樂
 };
 
 // DOM 元素
@@ -82,6 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
     changeZongziBtn = document.getElementById('change-zongzi');
     jumpButton = document.getElementById('jump-btn'); // 獲取跳躍按鈕
     
+    // 添加全局用戶互動監聽
+    setupUserInteractionListeners();
+    
     // 設置粽子選擇監聽器
     setupCharacterSelection();
     
@@ -111,6 +124,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化遊戲
     initGame();
 });
+
+// 設置全局用戶互動監聽
+function setupUserInteractionListeners() {
+    // 當用戶任何互動時（點擊、按鍵、觸摸），標記為已互動並嘗試播放音樂
+    const interactionHandler = function() {
+        console.log("用戶已互動，嘗試播放音樂");
+        userInteracted = true;
+        
+        // 如果背景音樂已初始化但未播放，則開始播放
+        if (bgmInitialized && bgmAudio && bgmAudio.paused) {
+            startBackgroundMusic();
+        }
+    };
+    
+    // 添加各種互動事件的監聽器
+    document.addEventListener('click', interactionHandler);
+    document.addEventListener('keydown', interactionHandler);
+    document.addEventListener('touchstart', interactionHandler);
+}
 
 // 設置漢堡選單
 function setupMenuToggle() {
@@ -143,6 +175,13 @@ function setupCharacterSelection() {
             
             // 獲取對應的障礙物集合
             currentObstacleSet = this.getAttribute('data-obstacle-set') || "common";
+            
+            // 切換背景音樂（如果在選擇畫面切換立即生效）
+            if (selectedZongzi === "zongzi 04") {
+                switchBackgroundMusic("bgm_central");
+            } else {
+                switchBackgroundMusic("bgm_main");
+            }
             
             // 延遲後關閉選擇面板並更新粽子
             setTimeout(function() {
@@ -184,6 +223,13 @@ function setupGameOverButtons() {
         // 延遲一下再初始化，確保UI更新
         setTimeout(function() {
             initGame();
+            
+            // 確保音樂重新開始播放
+            if (selectedZongzi === "zongzi 04") {
+                switchBackgroundMusic("bgm_central");
+            } else {
+                switchBackgroundMusic("bgm_main");
+            }
         }, 50);
     });
     
@@ -279,11 +325,22 @@ function imageExists(url) {
 function initGame() {
     console.log("初始化遊戲");
     
+    // 如果音樂尚未初始化，設置主背景音樂
+    if (!bgmInitialized) {
+        setupBackgroundMusic();
+    }
+    
     // Reset speed multiplier
     speedMultiplier = 1;
     if (selectedZongzi === "zongzi 04") { // If Central Zongzi is selected
         speedMultiplier = 1.3;
         console.log("中部粽加速模式啟動!");
+        
+        // 切換到中部粽專屬背景音樂
+        switchBackgroundMusic("bgm_central");
+    } else {
+        // 其他粽子使用主題背景音樂
+        switchBackgroundMusic("bgm_main");
     }
 
     // 重設遊戲變數
@@ -542,6 +599,11 @@ function endGame() {
     cancelAnimationFrame(animationId);
     zongzi.classList.remove('rolling');
     
+    // 暫停背景音樂
+    if (bgmAudio) {
+        bgmAudio.pause();
+    }
+    
     // 更新最終分數
     finalScoreDisplay.textContent = score;
 
@@ -598,5 +660,115 @@ function updateInstructions() {
         } else {
             instructionsElement.textContent = '按空白鍵或點擊跳躍';
         }
+    }
+}
+
+// 設置背景音樂
+function setupBackgroundMusic() {
+    console.log("設置背景音樂");
+    
+    // 初始預加載主題背景音樂
+    bgmAudio = new Audio(AUDIO_PATHS.bgm_main);
+    
+    // 設置循環播放
+    bgmAudio.loop = true;
+    
+    // 設置音量 (0.0 到 1.0 之間的值)
+    bgmAudio.volume = 0.5;
+    
+    // 預加載音頻
+    bgmAudio.preload = 'auto';
+    
+    // 記錄當前播放的是主題背景音樂
+    currentBgm = "bgm_main";
+    
+    // 標記音樂已初始化
+    bgmInitialized = true;
+    
+    // 如果用戶已經互動過，嘗試立即播放
+    if (userInteracted) {
+        startBackgroundMusic();
+    }
+    
+    // 添加音頻加載完成的事件處理
+    bgmAudio.addEventListener('canplaythrough', function() {
+        console.log("音樂已加載完成，可以播放");
+        // 如果用戶已互動，嘗試播放
+        if (userInteracted) {
+            startBackgroundMusic();
+        }
+    });
+}
+
+// 切換背景音樂
+function switchBackgroundMusic(musicKey) {
+    console.log("嘗試切換背景音樂到:", musicKey);
+    
+    // 如果音樂本就是當前正在播放的，不需要切換
+    if (currentBgm === musicKey) {
+        // 即使是相同的音樂，如果已經暫停，也要確保播放
+        if (bgmAudio && bgmAudio.paused && userInteracted) {
+            console.log("相同音樂，但已暫停，重新播放");
+            bgmAudio.currentTime = 0; // 重置播放位置
+            startBackgroundMusic();
+        }
+        return;
+    }
+    
+    // 暫停當前音樂
+    if (bgmAudio) {
+        bgmAudio.pause();
+    }
+    
+    // 切換到新的音樂
+    const musicPath = AUDIO_PATHS[musicKey];
+    if (musicPath) {
+        console.log("切換到新音樂:", musicPath);
+        bgmAudio = new Audio(musicPath);
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.5;
+        bgmAudio.preload = 'auto';
+        
+        // 記錄當前播放的音樂
+        currentBgm = musicKey;
+        
+        // 標記音樂已初始化
+        bgmInitialized = true;
+        
+        // 如果用戶已互動，嘗試播放
+        if (userInteracted) {
+            startBackgroundMusic();
+        }
+    }
+}
+
+// 開始播放背景音樂
+function startBackgroundMusic() {
+    if (!bgmAudio) {
+        console.log("音頻元素不存在，無法播放");
+        return;
+    }
+    
+    if (!userInteracted) {
+        console.log("用戶尚未互動，無法播放音樂");
+        return;
+    }
+    
+    if (bgmAudio.paused) {
+        console.log("嘗試播放音樂");
+        
+        // 嘗試播放音樂
+        let playPromise = bgmAudio.play();
+        
+        // 處理可能的播放失敗
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log("音樂播放成功");
+            }).catch(error => {
+                console.error("背景音樂播放失敗:", error);
+            });
+        }
+    } else {
+        console.log("音樂已經在播放中");
     }
 } 
